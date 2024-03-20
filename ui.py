@@ -10,7 +10,9 @@ GRID_SIZE = 9
 SIDE = CELL_SIZE*GRID_SIZE + THICK_LINE//2
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
+GREY = (230, 230, 230)
 LIGHT_BLUE = (173, 216, 230)
+RED = (173, 10, 50)
 
 # Initialize Pygame
 pygame.init()
@@ -40,17 +42,19 @@ def draw_numbers():
                 screen.blit(number, (x, y))
 
 # Function to highlight the selected cell
-def highlight_cell(row, col):
-    pygame.draw.rect(screen, LIGHT_BLUE, (col * CELL_SIZE+THIN_LINE, row * CELL_SIZE+THIN_LINE, CELL_SIZE-THIN_LINE, CELL_SIZE-THIN_LINE))
+def highlight_cell(row, col, color):
+    pygame.draw.rect(screen, color, (col * CELL_SIZE+THIN_LINE, row * CELL_SIZE+THIN_LINE, CELL_SIZE-THIN_LINE, CELL_SIZE-THIN_LINE))
 
 # Main game loop
 running = True
+solving = False
+tick = None
 selected_row, selected_col = -1, -1
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Left mouse button clicked
+        elif (not solving) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Left mouse button clicked
             x, y = pygame.mouse.get_pos()
             row = y // CELL_SIZE
             col = x // CELL_SIZE
@@ -60,9 +64,14 @@ while running:
             if event.key == pygame.K_BACKSPACE:
                 sudoku_board = [['-' for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
                 sudo = Sudoku()
-            elif event.key == pygame.K_RETURN:
+                solving = False
+            elif (not solving and event.key == pygame.K_RETURN):
+                solving = True
+                tick = None
+                selected_row, selected_col = -1, -1
+            elif (solving and event.key == pygame.K_SPACE):
                 sudo.input_grid(sudoku_board)
-                sudo.solve()
+                tick = sudo.solve()
                 sudoku_board = sudo.grid
             elif selected_row != -1 and selected_col != -1:
                 # Enter number in the selected cell
@@ -70,12 +79,25 @@ while running:
                 if '1' <= number <= '9' or number == '-':
                     sudoku_board[selected_row][selected_col] = number
                     selected_row, selected_col = -1, -1
-
-    screen.fill(WHITE)
+    color = WHITE if not solving else GREY
+    screen.fill(color)
     draw_grid()
+    if solving:
+        if (tick):
+            blocks = []
+            if tick[0] == 'row':
+                blocks = sudo.get_row(tick[1])
+            elif tick[0] == 'col':
+                blocks = sudo.get_column(tick[1])
+            else:
+                blocks = sudo.get_block(*tick[1])
+            for block in blocks:
+                highlight_cell(block[0], block[1], LIGHT_BLUE)
+            Y, X = tick[2]
+            highlight_cell(Y, X, RED)
     draw_numbers()
     if selected_row != -1 and selected_col != -1:
-        highlight_cell(selected_row, selected_col)
+        highlight_cell(selected_row, selected_col, LIGHT_BLUE)
     pygame.display.flip()
 
 pygame.quit()

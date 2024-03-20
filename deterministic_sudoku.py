@@ -44,7 +44,7 @@ class Sudoku:
                         made[val].append((Y, X))
                 for key, val in made.items():
                     if(len(val) == 1):
-                        return ('row', (i, j), val[0], key)    
+                        return ('block', (i, j), val[0], key)    
 
         return None 
 
@@ -66,13 +66,13 @@ class Sudoku:
         tick = self.find_something()
         if tick is None:
             print('Halting')
-            return
+            return None
         print('\n\n')
         print(tick)
         y,x = tick[2]
         self.add_num(y, x, tick[3])
         self.print_grid()
-        self.solve()
+        return tick
 
     def print_grid(self):
         print("Sudoku Grid:")
