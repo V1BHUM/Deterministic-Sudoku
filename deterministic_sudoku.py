@@ -1,3 +1,5 @@
+import random
+
 class Sudoku:
     def __init__(self):
         self.grid = [['-']*9 for _ in range(9)]
@@ -5,6 +7,12 @@ class Sudoku:
         for x in range(9):
             for y in range(9):
                 self.possible[(y,x)] = set(list(range(1,10)))
+        
+        self.possible_check = []
+        self.possible_check.extend([('row', i) for i in range(9)])
+        self.possible_check.extend([('col', i) for i in range(9)])
+        self.possible_check.extend([('block', i, j) for i in range(3) for j in range(3)])
+
 
     def add_num(self, y, x, val):
         for Y, X in self.get_row(y):
@@ -18,33 +26,35 @@ class Sudoku:
 
 
     def find_something(self):
-        for i in range(9):
-            made = dict({i:[] for i in range(1, 10)})
-            for Y, X in self.get_row(i):
-                for val in self.possible[(Y, X)]:
-                    made[val].append((Y, X))
-            for key, val in made.items():
-                if(len(val) == 1):
-                    return ('row', i, val[0], key)
-                
-        for i in range(9):
-            made = dict({i:[] for i in range(1, 10)})
-            for Y, X in self.get_column(i):
-                for val in self.possible[(Y, X)]:
-                    made[val].append((Y, X))
-            for key, val in made.items():
-                if(len(val) == 1):
-                    return ('col', i, val[0], key)
-        
-        for i in range(3):
-            for j in range(3):
+        random.shuffle(self.possible_check)
+        for check in self.possible_check:
+            kind = check[0]
+            if kind == 'row':
                 made = dict({i:[] for i in range(1, 10)})
-                for Y, X in self.get_block(i, j):
+                for Y, X in self.get_row(check[1]):
                     for val in self.possible[(Y, X)]:
                         made[val].append((Y, X))
                 for key, val in made.items():
                     if(len(val) == 1):
-                        return ('block', (i, j), val[0], key)    
+                        return ('row', check[1], val[0], key)
+                    
+            elif kind == 'col':
+                made = dict({i:[] for i in range(1, 10)})
+                for Y, X in self.get_column(check[1]):
+                    for val in self.possible[(Y, X)]:
+                        made[val].append((Y, X))
+                for key, val in made.items():
+                    if(len(val) == 1):
+                        return ('col', check[1], val[0], key)
+            
+            else:
+                made = dict({i:[] for i in range(1, 10)})
+                for Y, X in self.get_block(check[1], check[2]):
+                    for val in self.possible[(Y, X)]:
+                        made[val].append((Y, X))
+                for key, val in made.items():
+                    if(len(val) == 1):
+                        return ('block', (check[1], check[2]), val[0], key)    
 
         return None 
 
@@ -112,6 +122,5 @@ if __name__ == "__main__":
     ]
     sudoku.input_grid(grid_input)
     sudoku.print_grid()
-
-    # Get coordinates of each row, column, and block
+    
     sudoku.solve()
